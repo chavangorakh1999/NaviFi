@@ -1,0 +1,32 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.pyc
+*.pyd
+*.pyo
+
+# Virtual environment
+venv/
+.venv/
+env/
+
+# Editor/IDE files
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+*.swp
+
+# Log files
+*.log
+
+# Database files
+*.sqlite3
+
+# Temporary files
+*.tmp
+*.bak
+*.swp
+
+# Sensitive files (if applicable, customize as needed)
+local_settings.py
+.env
