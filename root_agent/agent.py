@@ -4,63 +4,217 @@ from google.adk.tools import google_search
 from google.adk.tools.mcp_tool.mcp_toolset import MCPToolset
 from google.adk.tools.mcp_tool.mcp_session_manager import StreamableHTTPServerParams
 import os
+from datetime import datetime
 
-# MCP toolset configuration
-mcp = MCPToolset(
+# =============================================================================
+# MCP TOOLSET CONFIGURATION - Separate toolsets to avoid multiple tools constraint
+# =============================================================================
+
+# Individual MCP toolsets (Google ADK constraint: multiple tools only allowed if all are search tools)
+net_worth_mcp = MCPToolset(
     connection_params=StreamableHTTPServerParams(
         url=os.getenv("MCP_SERVER_URL"),
     ),
-    tool_filter=["fetch_net_worth","fetch_credit_report","fetch_epf_details","fetch_mf_transactions","fetch_bank_transactions","fetch_stock_transactions"]
+    tool_filter=["fetch_net_worth"]
+)
+
+credit_report_mcp = MCPToolset(
+    connection_params=StreamableHTTPServerParams(
+        url=os.getenv("MCP_SERVER_URL"),
+    ),
+    tool_filter=["fetch_credit_report"]
+)
+
+epf_details_mcp = MCPToolset(
+    connection_params=StreamableHTTPServerParams(
+        url=os.getenv("MCP_SERVER_URL"),
+    ),
+    tool_filter=["fetch_epf_details"]
+)
+
+mf_transactions_mcp = MCPToolset(
+    connection_params=StreamableHTTPServerParams(
+        url=os.getenv("MCP_SERVER_URL"),
+    ),
+    tool_filter=["fetch_mf_transactions"]
+)
+
+bank_transactions_mcp = MCPToolset(
+    connection_params=StreamableHTTPServerParams(
+        url=os.getenv("MCP_SERVER_URL"),
+    ),
+    tool_filter=["fetch_bank_transactions"]
+)
+
+stock_transactions_mcp = MCPToolset(
+    connection_params=StreamableHTTPServerParams(
+        url=os.getenv("MCP_SERVER_URL"),
+    ),
+    tool_filter=["fetch_stock_transactions"]
 )
 
 # =============================================================================
-# MCP-BASED AGENTS (Financial Data Management & Analysis)
+# SPECIALIZED DATA FETCHING AGENTS (Each with single MCP tool)
 # =============================================================================
 
-# Data Agent - Only fetches and caches data using MCP tools
-data_agent_instruction = """
-You are a Data Management Agent responsible for fetching and caching ALL financial data from MCP server using context.state.
+# Net Worth Data Agent
+net_worth_agent_instruction = """
+You are a Net Worth Data Agent responsible for fetching net worth data using MCP tools.
 
-Your ONLY responsibility is data management - you do NOT provide financial advice or analysis.
+Your ONLY responsibility is to:
+1. Fetch net worth data using fetch_net_worth tool
+2. Store the result in context.state["data:net_worth"]
+3. Confirm data was fetched
 
-Core Functions:
-1. Fetch ALL financial data using MCP tools when requested
-2. Cache fetched data in context.state for other agents to access
-3. Provide a brief confirmation of data fetched
-
-Available MCP Tools (use ALL when fetching):
-- fetch_net_worth: Get current assets, liabilities, and net worth
-- fetch_credit_report: Get credit score and debt information
-- fetch_epf_details: Get retirement fund balance and contributions
-- fetch_mf_transactions: Get mutual fund investment history  
-- fetch_bank_transactions: Get complete bank transaction history
-- fetch_stock_transactions: Get stock trading history
-
-Data Storage Protocol:
-When fetching data, you MUST:
-1. Call ALL 6 MCP tools to get complete financial picture
-2. Store each result in context.state immediately:
-   - context.state["data:net_worth"] = fetch_net_worth() result
-   - context.state["data:credit_report"] = fetch_credit_report() result
-   - context.state["data:epf_details"] = fetch_epf_details() result
-   - context.state["data:mf_transactions"] = fetch_mf_transactions() result
-   - context.state["data:bank_transactions"] = fetch_bank_transactions() result
-   - context.state["data:stock_transactions"] = fetch_stock_transactions() result
-   - context.state["data:last_updated"] = current timestamp
-
-Response Format:
-After successfully caching data, respond ONLY:
-"✅ Data fetched and cached: Net Worth, Credit Report, EPF Details, MF Transactions, Bank Transactions, Stock Transactions"
-
-Never provide financial advice - your role is purely data fetching and caching.
+Response: "✅ Net Worth data fetched and cached"
 """
 
-data_agent = Agent(
+net_worth_agent = Agent(
     model="gemini-2.0-flash",
-    name="DATA_AGENT", 
-    description="Agent responsible for fetching and caching all financial data",
-    instruction=data_agent_instruction,
-    tools=[mcp],
+    name="NET_WORTH_AGENT",
+    description="Fetches net worth data",
+    instruction=net_worth_agent_instruction,
+    tools=[net_worth_mcp],
+)
+
+# Credit Report Data Agent  
+credit_report_agent_instruction = """
+You are a Credit Report Data Agent responsible for fetching credit report data using MCP tools.
+
+Your ONLY responsibility is to:
+1. Fetch credit report using fetch_credit_report tool
+2. Store the result in context.state["data:credit_report"] 
+3. Confirm data was fetched
+
+Response: "✅ Credit Report data fetched and cached"
+"""
+
+credit_report_agent = Agent(
+    model="gemini-2.0-flash",
+    name="CREDIT_REPORT_AGENT",
+    description="Fetches credit report data",
+    instruction=credit_report_agent_instruction,
+    tools=[credit_report_mcp],
+)
+
+# EPF Details Data Agent
+epf_agent_instruction = """
+You are an EPF Data Agent responsible for fetching EPF details using MCP tools.
+
+Your ONLY responsibility is to:
+1. Fetch EPF details using fetch_epf_details tool
+2. Store the result in context.state["data:epf_details"]
+3. Confirm data was fetched
+
+Response: "✅ EPF data fetched and cached"
+"""
+
+epf_agent = Agent(
+    model="gemini-2.0-flash",
+    name="EPF_AGENT", 
+    description="Fetches EPF data",
+    instruction=epf_agent_instruction,
+    tools=[epf_details_mcp],
+)
+
+# Mutual Fund Transactions Data Agent
+mf_agent_instruction = """
+You are a Mutual Fund Data Agent responsible for fetching MF transaction data using MCP tools.
+
+Your ONLY responsibility is to:
+1. Fetch MF transactions using fetch_mf_transactions tool
+2. Store the result in context.state["data:mf_transactions"]
+3. Confirm data was fetched
+
+Response: "✅ Mutual Fund transaction data fetched and cached"
+"""
+
+mf_agent = Agent(
+    model="gemini-2.0-flash",
+    name="MF_AGENT",
+    description="Fetches mutual fund transaction data", 
+    instruction=mf_agent_instruction,
+    tools=[mf_transactions_mcp],
+)
+
+# Bank Transactions Data Agent
+bank_agent_instruction = """
+You are a Bank Data Agent responsible for fetching bank transaction data using MCP tools.
+
+Your ONLY responsibility is to:
+1. Fetch bank transactions using fetch_bank_transactions tool
+2. Store the result in context.state["data:bank_transactions"]
+3. Confirm data was fetched
+
+Response: "✅ Bank transaction data fetched and cached"
+"""
+
+bank_agent = Agent(
+    model="gemini-2.0-flash",
+    name="BANK_AGENT",
+    description="Fetches bank transaction data",
+    instruction=bank_agent_instruction,
+    tools=[bank_transactions_mcp],
+)
+
+# Stock Transactions Data Agent
+stock_agent_instruction = """
+You are a Stock Data Agent responsible for fetching stock transaction data using MCP tools.
+
+Your ONLY responsibility is to:
+1. Fetch stock transactions using fetch_stock_transactions tool
+2. Store the result in context.state["data:stock_transactions"]
+3. Confirm data was fetched
+
+Response: "✅ Stock transaction data fetched and cached"
+"""
+
+stock_agent = Agent(
+    model="gemini-2.0-flash",
+    name="STOCK_AGENT",
+    description="Fetches stock transaction data",
+    instruction=stock_agent_instruction,
+    tools=[stock_transactions_mcp],
+)
+
+# Data Coordinator Agent - Orchestrates all data fetching (No tools - uses sub-agents)
+data_coordinator_instruction = """
+You are a Data Coordinator Agent responsible for orchestrating all financial data collection.
+
+Your responsibility is to:
+1. Coordinate with all data fetching agents to gather complete financial picture
+2. Ensure all data is stored in context.state with timestamp
+3. Provide summary of data collection status
+
+You coordinate with:
+- NET_WORTH_AGENT: for assets and liabilities
+- CREDIT_REPORT_AGENT: for credit score and debt info
+- EPF_AGENT: for retirement fund details
+- MF_AGENT: for mutual fund transactions
+- BANK_AGENT: for bank transactions  
+- STOCK_AGENT: for stock transactions
+
+After all data is collected, store timestamp:
+context.state["data:last_updated"] = datetime.now().isoformat()
+
+Response: "✅ Complete financial data collected and cached: Net Worth, Credit Report, EPF, MF Transactions, Bank Transactions, Stock Transactions"
+"""
+
+data_coordinator = Agent(
+    model="gemini-2.0-flash",
+    name="DATA_COORDINATOR",
+    description="Coordinates all financial data collection",
+    instruction=data_coordinator_instruction,
+    tools=[],  # No direct tools - orchestrates sub-agents
+    sub_agents=[
+        # Direct sub-agents without ParallelAgent to avoid tool constraint violations
+        net_worth_agent,
+        credit_report_agent, 
+        epf_agent,
+        mf_agent,
+        bank_agent,
+        stock_agent
+    ]
 )
 
 # Planning Agent - Only provides planning analysis using cached data
@@ -444,15 +598,15 @@ YOUR CORE RESPONSIBILITIES:
 DECISION MAKING FRAMEWORK:
 
 Step 1: CHECK AUTHENTICATION & DATA STATE
-- If context.state is empty or user seems unauthenticated → ALWAYS call DATA_AGENT first
+- If context.state is empty or user seems unauthenticated → ALWAYS call DATA_COORDINATOR first
 - If data exists in context.state and is recent (< 1 hour) → Skip data fetching
-- If user mentions login issues → Provide login link and call DATA_AGENT
+- If user mentions login issues → Provide login link and call DATA_COORDINATOR
 
 Step 2: ANALYZE QUERY TYPE & INTENT
 Query Types and Required Agents:
 
 📊 PERSONAL FINANCE ANALYSIS (requires personal data):
-- "my net worth", "my spending", "my portfolio" → DATA_AGENT + PLANNING_AGENT + INSIGHTS_AGENT
+- "my net worth", "my spending", "my portfolio" → DATA_COORDINATOR + PLANNING_AGENT + INSIGHTS_AGENT
 - Keywords: my, current, existing, personal, portfolio
 
 📈 INVESTMENT RESEARCH (market data only):
@@ -460,13 +614,13 @@ Query Types and Required Agents:
 - Keywords: recommend, best, current market, stocks, SIP
 
 🎯 LIFE EVENT PLANNING (specific event + personal data):
-- "salary hike planning" → DATA_AGENT + SALARY_HIKE_AGENT
-- "marriage planning" → DATA_AGENT + MARRIAGE_AGENT  
-- "job loss help" → DATA_AGENT + JOB_LOSS_AGENT
-- "moving to city" → DATA_AGENT + CITY_MOVE_AGENT
-- "having a baby" → DATA_AGENT + CHILDBIRTH_AGENT
-- "starting freelancing" → DATA_AGENT + FREELANCING_AGENT
-- "stock windfall" → DATA_AGENT + STOCK_WINDFALL_AGENT
+- "salary hike planning" → DATA_COORDINATOR + SALARY_HIKE_AGENT
+- "marriage planning" → DATA_COORDINATOR + MARRIAGE_AGENT  
+- "job loss help" → DATA_COORDINATOR + JOB_LOSS_AGENT
+- "moving to city" → DATA_COORDINATOR + CITY_MOVE_AGENT
+- "having a baby" → DATA_COORDINATOR + CHILDBIRTH_AGENT
+- "starting freelancing" → DATA_COORDINATOR + FREELANCING_AGENT
+- "stock windfall" → DATA_COORDINATOR + STOCK_WINDFALL_AGENT
 
 🔍 GENERAL FINANCIAL QUESTIONS (research only):
 - "how to invest", "what is SIP", "financial tips" → Relevant SEARCH agents only
@@ -474,36 +628,30 @@ Query Types and Required Agents:
 Step 3: EXECUTION STRATEGY
 - Single focus queries → Run only needed agent
 - Complex queries → Run agents in optimal sequence/parallel
-- If DATA_AGENT needed → Always run first, then others in parallel
+- If DATA_COORDINATOR needed → Always run first, then others in parallel
 - If agent fails → Continue with others and note the failure
 
 AGENT INVOCATION RULES:
 
 1. DATA STATE CHECK:
-```
-if not context.state.get("data:last_updated") or is_data_stale():
-    invoke DATA_AGENT first
-```
+- Check if context.state contains "data:last_updated" 
+- Check if the data is recent (less than 1 hour old)
+- If no data or stale data exists, invoke DATA_COORDINATOR first
 
 2. DYNAMIC AGENT SELECTION:
-```
-if query_mentions_life_event(query):
-    agents = [DATA_AGENT, get_life_event_agent(query)]
-elif query_is_investment_only(query):
-    agents = [STOCK_SIP_AGENT]
-elif query_is_personal_analysis(query):
-    agents = [DATA_AGENT, PLANNING_AGENT, INSIGHTS_AGENT]
-```
+- For life event queries: Use DATA_COORDINATOR + relevant life event agent
+- For investment-only queries: Use STOCK_SIP_AGENT only  
+- For personal analysis queries: Use DATA_COORDINATOR + PLANNING_AGENT + INSIGHTS_AGENT
 
 3. ERROR HANDLING:
-- If DATA_AGENT fails → Explain login needed and provide link
+- If DATA_COORDINATOR fails → Explain login needed and provide link
 - If other agents fail → Continue with successful ones
 - Always provide partial response rather than complete failure
 
 EXECUTION PATTERNS:
 
 🔄 SEQUENTIAL (when data dependency exists):
-DATA_AGENT → [PLANNING_AGENT + INSIGHTS_AGENT + LIFE_EVENT_AGENT] in parallel
+DATA_COORDINATOR → [PLANNING_AGENT + INSIGHTS_AGENT + LIFE_EVENT_AGENT] in parallel
 
 ⚡ PARALLEL (when no dependencies):
 [STOCK_SIP_AGENT + SALARY_HIKE_AGENT + ...] for comprehensive research
@@ -529,63 +677,32 @@ ERROR RECOVERY EXAMPLES:
 Remember: NEVER run all agents unnecessarily. Be smart about what the user actually needs.
 """
 
-# Complete workflow combining both MCP and Search capabilities with dynamic execution
-complete_workflow = Agent(
-    name="dynamic_financial_coordinator",
-    model="gemini-2.0-flash", 
-    description="Dynamic coordinator that intelligently selects and runs appropriate agents",
-    instruction="""
-    You are a Dynamic Financial Workflow Coordinator. Your job is to:
-    
-    1. Analyze the user query to understand their specific needs
-    2. Check context.state for existing data and freshness
-    3. Dynamically select only the relevant agents to invoke
-    4. Handle errors gracefully without stopping the entire workflow
-    5. Provide comprehensive responses from successful agent outputs
-    
-    Available Agents and When to Use:
-    
-    DATA_AGENT: Use when personal financial data is needed and not cached or stale
-    PLANNING_AGENT: Use for long-term financial planning questions  
-    INSIGHTS_AGENT: Use for spending analysis and behavioral insights
-    STOCK_SIP_AGENT: Use for investment recommendations and market research
-    SALARY_HIKE_AGENT: Use for salary increase optimization
-    JOB_LOSS_AGENT: Use for unemployment financial planning
-    CITY_MOVE_AGENT: Use for relocation financial planning  
-    MARRIAGE_AGENT: Use for wedding and marriage financial planning
-    FREELANCING_AGENT: Use for self-employment financial strategies
-    STOCK_WINDFALL_AGENT: Use for sudden wealth management
-    CHILDBIRTH_AGENT: Use for family and education planning
-    
-    Decision Logic:
-    - Check if personal data exists in context.state
-    - Identify specific life events or goals mentioned
-    - Select minimal set of agents needed
-    - Run data agent first if needed, then others in parallel
-    - Handle failures gracefully and continue with successful agents
-    """,
-    tools=[],
-    sub_agents=[
-        data_agent,
-        planning_agent, 
-        insights_agent,
-        stock_sip_agent,
-        salary_hike_agent,
-        job_loss_agent,
-        city_move_agent,
-        marriage_agent,
-        freelancing_agent,
-        stock_windfall_agent,
-        childbirth_agent,
-    ]
-)
+# =============================================================================
+# SIMPLIFIED ARCHITECTURE - NO INTERMEDIATE WORKFLOWS 
+# =============================================================================
 
-# Root agent coordinates everything with intelligent decision making
+# Note: Removed intermediate workflows to avoid parent-child conflicts
+# All agents are now direct children of the root agent
+
+# Root agent coordinates everything with intelligent decision making - single workflow approach
 root_agent = Agent(
     name="intelligent_financial_agent", 
     model="gemini-2.0-flash",
     description="Intelligent financial coordinator with dynamic agent selection and robust error handling",
     instruction=root_agent_instruction,
-    tools=[],  # No direct tools - delegates to specialized workflows
-    sub_agents=[complete_workflow]
+    tools=[],  # No direct tools - delegates to specialized agents
+    sub_agents=[
+        # All agents directly under root - no mixed workflows
+        data_coordinator,    # MCP coordination (no direct tools)
+        planning_agent,      # No tools
+        insights_agent,      # No tools  
+        stock_sip_agent,     # Search tool only
+        salary_hike_agent,   # Search tool only
+        job_loss_agent,      # Search tool only
+        city_move_agent,     # Search tool only
+        marriage_agent,      # Search tool only
+        freelancing_agent,   # Search tool only
+        stock_windfall_agent,# Search tool only
+        childbirth_agent,    # Search tool only
+    ]
 )
