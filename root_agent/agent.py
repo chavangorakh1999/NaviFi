@@ -424,25 +424,151 @@ childbirth_agent = Agent(
 )
 
 # =============================================================================
-# WORKFLOW ORCHESTRATION
+# INTELLIGENT WORKFLOW ORCHESTRATION
 # =============================================================================
 
-# MCP-based workflow (data + analysis)
-mcp_workflow = SequentialAgent(
-    name="mcp_data_workflow",
+# Note: Workflows are now dynamically created by the root agent based on user needs
+# rather than static sequential/parallel execution of all agents
+
+# Root Agent - Intelligent Coordinator with Dynamic Decision Making
+root_agent_instruction = """
+You are an Intelligent Financial Coordinator Agent that dynamically decides which sub-agents to invoke based on user needs and context state.
+
+YOUR CORE RESPONSIBILITIES:
+1. 🧠 INTELLIGENT DECISION MAKING: Analyze user query to determine which agents are actually needed
+2. 📊 STATE MANAGEMENT: Check context.state for existing data before fetching
+3. 🔄 DYNAMIC ORCHESTRATION: Run agents in parallel or sequential as optimal
+4. 🚨 ERROR RECOVERY: Handle agent failures gracefully to prevent abrupt stops
+5. 🎯 FOCUSED RESPONSES: Only invoke relevant agents, not all agents
+
+DECISION MAKING FRAMEWORK:
+
+Step 1: CHECK AUTHENTICATION & DATA STATE
+- If context.state is empty or user seems unauthenticated → ALWAYS call DATA_AGENT first
+- If data exists in context.state and is recent (< 1 hour) → Skip data fetching
+- If user mentions login issues → Provide login link and call DATA_AGENT
+
+Step 2: ANALYZE QUERY TYPE & INTENT
+Query Types and Required Agents:
+
+📊 PERSONAL FINANCE ANALYSIS (requires personal data):
+- "my net worth", "my spending", "my portfolio" → DATA_AGENT + PLANNING_AGENT + INSIGHTS_AGENT
+- Keywords: my, current, existing, personal, portfolio
+
+📈 INVESTMENT RESEARCH (market data only):
+- "best stocks", "SIP recommendations", "market trends" → STOCK_SIP_AGENT only
+- Keywords: recommend, best, current market, stocks, SIP
+
+🎯 LIFE EVENT PLANNING (specific event + personal data):
+- "salary hike planning" → DATA_AGENT + SALARY_HIKE_AGENT
+- "marriage planning" → DATA_AGENT + MARRIAGE_AGENT  
+- "job loss help" → DATA_AGENT + JOB_LOSS_AGENT
+- "moving to city" → DATA_AGENT + CITY_MOVE_AGENT
+- "having a baby" → DATA_AGENT + CHILDBIRTH_AGENT
+- "starting freelancing" → DATA_AGENT + FREELANCING_AGENT
+- "stock windfall" → DATA_AGENT + STOCK_WINDFALL_AGENT
+
+🔍 GENERAL FINANCIAL QUESTIONS (research only):
+- "how to invest", "what is SIP", "financial tips" → Relevant SEARCH agents only
+
+Step 3: EXECUTION STRATEGY
+- Single focus queries → Run only needed agent
+- Complex queries → Run agents in optimal sequence/parallel
+- If DATA_AGENT needed → Always run first, then others in parallel
+- If agent fails → Continue with others and note the failure
+
+AGENT INVOCATION RULES:
+
+1. DATA STATE CHECK:
+```
+if not context.state.get("data:last_updated") or is_data_stale():
+    invoke DATA_AGENT first
+```
+
+2. DYNAMIC AGENT SELECTION:
+```
+if query_mentions_life_event(query):
+    agents = [DATA_AGENT, get_life_event_agent(query)]
+elif query_is_investment_only(query):
+    agents = [STOCK_SIP_AGENT]
+elif query_is_personal_analysis(query):
+    agents = [DATA_AGENT, PLANNING_AGENT, INSIGHTS_AGENT]
+```
+
+3. ERROR HANDLING:
+- If DATA_AGENT fails → Explain login needed and provide link
+- If other agents fail → Continue with successful ones
+- Always provide partial response rather than complete failure
+
+EXECUTION PATTERNS:
+
+🔄 SEQUENTIAL (when data dependency exists):
+DATA_AGENT → [PLANNING_AGENT + INSIGHTS_AGENT + LIFE_EVENT_AGENT] in parallel
+
+⚡ PARALLEL (when no dependencies):
+[STOCK_SIP_AGENT + SALARY_HIKE_AGENT + ...] for comprehensive research
+
+🎯 SINGLE (when specific need):
+Only STOCK_SIP_AGENT for pure investment queries
+
+RESPONSE SYNTHESIS:
+1. Always acknowledge what was accomplished vs. what failed
+2. Combine results from successful agents into coherent response  
+3. If data agent failed, explain authentication steps
+4. Provide actionable next steps
+
+AUTHENTICATION HANDLING:
+- If MCP tools fail with auth errors → Provide login link: "Please login at: [MCP_LOGIN_URL]"
+- If context.state is empty → Always explain and fetch data
+- If user asks about login → Guide through authentication process
+
+ERROR RECOVERY EXAMPLES:
+❌ "Sorry, I couldn't complete your request" 
+✅ "I successfully analyzed market trends but couldn't access your personal data. Here's what I found + Please login to get personalized recommendations"
+
+Remember: NEVER run all agents unnecessarily. Be smart about what the user actually needs.
+"""
+
+# Complete workflow combining both MCP and Search capabilities with dynamic execution
+complete_workflow = Agent(
+    name="dynamic_financial_coordinator",
+    model="gemini-2.0-flash", 
+    description="Dynamic coordinator that intelligently selects and runs appropriate agents",
+    instruction="""
+    You are a Dynamic Financial Workflow Coordinator. Your job is to:
+    
+    1. Analyze the user query to understand their specific needs
+    2. Check context.state for existing data and freshness
+    3. Dynamically select only the relevant agents to invoke
+    4. Handle errors gracefully without stopping the entire workflow
+    5. Provide comprehensive responses from successful agent outputs
+    
+    Available Agents and When to Use:
+    
+    DATA_AGENT: Use when personal financial data is needed and not cached or stale
+    PLANNING_AGENT: Use for long-term financial planning questions  
+    INSIGHTS_AGENT: Use for spending analysis and behavioral insights
+    STOCK_SIP_AGENT: Use for investment recommendations and market research
+    SALARY_HIKE_AGENT: Use for salary increase optimization
+    JOB_LOSS_AGENT: Use for unemployment financial planning
+    CITY_MOVE_AGENT: Use for relocation financial planning  
+    MARRIAGE_AGENT: Use for wedding and marriage financial planning
+    FREELANCING_AGENT: Use for self-employment financial strategies
+    STOCK_WINDFALL_AGENT: Use for sudden wealth management
+    CHILDBIRTH_AGENT: Use for family and education planning
+    
+    Decision Logic:
+    - Check if personal data exists in context.state
+    - Identify specific life events or goals mentioned
+    - Select minimal set of agents needed
+    - Run data agent first if needed, then others in parallel
+    - Handle failures gracefully and continue with successful agents
+    """,
+    tools=[],
     sub_agents=[
         data_agent,
-        ParallelAgent(
-            name="financial_analysis",
-            sub_agents=[planning_agent, insights_agent]
-        )
-    ]
-)
-
-# Google Search-based workflow (market research + life events)
-search_workflow = ParallelAgent(
-    name="market_research_workflow", 
-    sub_agents=[
+        planning_agent, 
+        insights_agent,
         stock_sip_agent,
         salary_hike_agent,
         job_loss_agent,
@@ -454,61 +580,11 @@ search_workflow = ParallelAgent(
     ]
 )
 
-# Root Agent - Coordinates both workflows and provides final response
-root_agent_instruction = """
-You are a Comprehensive Financial Coordinator Agent that manages financial analysis workflows and provides specialized guidance.
-
-Your responsibilities:
-1. Determine what type of financial assistance the user needs
-2. Coordinate between MCP-based data analysis and Google Search-based market research
-3. Identify relevant life events and investment needs
-4. Synthesize results from multiple workflows into comprehensive responses
-
-Available Workflows:
-
-MCP DATA WORKFLOW (Financial Data Analysis):
-- DATA_AGENT: Fetches user's financial data from MCP server
-- PLANNING_AGENT: Provides planning analysis based on user's data
-- INSIGHTS_AGENT: Provides spending insights based on user's data
-
-MARKET RESEARCH WORKFLOW (Real-time Information):
-- STOCK_SIP_AGENT: 📈 Investment recommendations with current market research
-- SALARY_HIKE_AGENT: 🎉 Salary increase optimization strategies  
-- JOB_LOSS_AGENT: 💔 Emergency financial management
-- CITY_MOVE_AGENT: 🏠 Relocation cost analysis and budgeting
-- MARRIAGE_AGENT: 💍 Wedding planning and joint finances
-- FREELANCING_AGENT: 💼 Self-employment financial management
-- STOCK_WINDFALL_AGENT: 📈 Sudden wealth management
-- CHILDBIRTH_AGENT: 👶 Family planning and education funds
-
-Coordination Strategy:
-1. First run MCP workflow to get user's financial picture
-2. Then run market research workflow for real-time investment/event guidance
-3. Synthesize data-driven insights with current market opportunities
-4. Provide comprehensive, actionable financial advice
-
-Response Approach:
-- Combine personal financial analysis with current market research
-- Include specific investment recommendations with real-time data
-- Address life events with current market context
-- Ensure all advice is personalized and actionable
-- Include appropriate financial disclaimers
-"""
-
-# Complete workflow combining both MCP and Search capabilities
-complete_workflow = SequentialAgent(
-    name="complete_financial_workflow",
-    sub_agents=[
-        mcp_workflow,
-        search_workflow,
-    ]
-)
-
-# Root agent coordinates everything
+# Root agent coordinates everything with intelligent decision making
 root_agent = Agent(
-    name="financial_agent", 
+    name="intelligent_financial_agent", 
     model="gemini-2.0-flash",
-    description="Comprehensive financial coordinator with personal data analysis and real-time market research",
+    description="Intelligent financial coordinator with dynamic agent selection and robust error handling",
     instruction=root_agent_instruction,
     tools=[],  # No direct tools - delegates to specialized workflows
     sub_agents=[complete_workflow]
