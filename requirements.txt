@@ -1,0 +1,22 @@
+# NaviFi API Requirements - Essential Packages Only
+# These are the only packages actually used in the codebase
+
+# Core web framework (used in api_simple.py, api.py)
+fastapi>=0.104.1
+uvicorn[standard]>=0.24.0
+pydantic>=2.5.0
+
+# HTTP client libraries (used in test files)
+requests>=2.31.0
+
+# Note: aiohttp is optional and only used in test_api.py for concurrent testing
+# If you want to run the full test suite, uncomment the line below:
+# aiohttp>=3.9.0
+
+# Testing framework (optional - only if you want to run tests)
+# pytest>=7.4.0
+# pytest-asyncio>=0.21.0
+
+# Installation instructions:
+# 1. For basic API functionality: pip install -r requirements.txt
+# 2. For full testing: pip install -r requirements.txt aiohttp pytest pytest-asyncio 

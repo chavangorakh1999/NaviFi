@@ -1,0 +1,18 @@
+# Minimal requirements for NaviFi API (Simplified Version)
+# These packages are actually used in the codebase and available in public PyPI
+
+# Core web framework
+fastapi>=0.104.1
+uvicorn[standard]>=0.24.0
+pydantic>=2.5.0
+
+# HTTP client libraries (used in tests and API calls)
+requests>=2.31.0
+aiohttp>=3.9.0
+
+# Testing framework
+pytest>=7.4.0
+pytest-asyncio>=0.21.0
+
+# Note: This minimal setup supports the simplified API with full security guardrails
+# All security features work without Google ADK dependencies 

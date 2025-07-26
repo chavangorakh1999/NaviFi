@@ -6,13 +6,25 @@ import json
 import logging
 from typing import AsyncGenerator, Optional
 import uvicorn
+from datetime import datetime
 from root_agent.agent import root_agent
 import os
 from datetime import datetime
 
+# Import security guardrails
+from guardrails import (
+    ToolSecurityGuardrail, 
+    before_tool_guardrail, 
+    ALLOWED_FETCH_TOOLS,
+    rate_limit_store
+)
+
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+# Initialize security components
+security_guardrail = ToolSecurityGuardrail()
 
 app = FastAPI(
     title="NaviFi Financial Agent API",
@@ -31,10 +43,11 @@ class ChatResponse(BaseModel):
     agents_used: Optional[list] = None
     authentication_required: bool = False
     login_url: Optional[str] = None
+    security_info: dict = None
 
 async def stream_agent_response(prompt: str, user_id: str, session_id: Optional[str] = None) -> AsyncGenerator[str, None]:
     """
-    Stream responses from the intelligent financial agent with robust error handling
+    Stream responses from the financial agent with security guardrails
     """
     agents_invoked = []
     authentication_required = False
@@ -45,10 +58,23 @@ async def stream_agent_response(prompt: str, user_id: str, session_id: Optional[
         from google.adk.sessions import InMemorySessionService
         from google.genai import types
         
-        logger.info(f"Processing prompt for user {user_id}: {prompt[:100]}...")
+
+        # logger.info(f"Processing prompt for user {user_id}: {prompt[:100]}...")
         
-        # Send initial response with authentication check
-        yield f"data: {json.dumps({'type': 'start', 'message': 'Analyzing your financial query...', 'timestamp': datetime.now().isoformat()})}\n\n"
+        # # Send initial response with authentication check
+        # yield f"data: {json.dumps({'type': 'start', 'message': 'Analyzing your financial query...', 'timestamp': datetime.now().isoformat()})}\n\n"
+
+        # 1. Apply pre-execution security guardrails
+        pre_result = await security_guardrail.apply_pre_hook(prompt, user_id)
+        
+        if pre_result.blocked:
+            yield f"data: {json.dumps({'type': 'error', 'message': pre_result.output})}\n\n"
+            return
+        
+        logger.info(f"Processing secure prompt for user {user_id}: {prompt[:50]}...")
+        
+        # Send initial response
+        yield f"data: {json.dumps({'type': 'start', 'message': 'Processing your financial query securely...'})}\n\n"
         
         # Create session and runner with error handling
         try:
@@ -74,14 +100,34 @@ async def stream_agent_response(prompt: str, user_id: str, session_id: Optional[
         # Check authentication status by looking at context state
         yield f"data: {json.dumps({'type': 'status', 'message': 'Checking authentication and data availability...'})}\n\n"
         
-        # Create user message content
-        content = types.Content(role='user', parts=[types.Part(text=prompt)])
+        # Create user message content with sanitized prompt
+        content = types.Content(role='user', parts=[types.Part(text=pre_result.output)])
         
         # Run the agent with comprehensive error handling
         full_response = ""
         agent_count = 0
         successful_agents = []
         failed_agents = []
+        async for event in runner.run_async(user_id=user_id, session_id=session.id, new_message=content):
+            if event.content and event.content.parts:
+                # Extract text from event parts
+                event_text = ''.join(part.text or '' for part in event.content.parts if part.text)
+                if event_text:
+                    # Apply post-execution security guardrails to each chunk
+                    post_result = await security_guardrail.apply_post_hook(event_text, user_id)
+                    sanitized_text = post_result.output
+                    
+                    # Stream in chunks for better UX
+                    chunk_size = 50
+                    for i in range(0, len(sanitized_text), chunk_size):
+                        chunk = sanitized_text[i:i + chunk_size]
+                        full_response += chunk
+                        yield f"data: {json.dumps({'type': 'chunk', 'content': chunk})}\n\n"
+                        await asyncio.sleep(0.01)
+            
+            # Check if this is the final response
+            if hasattr(event, 'is_final_response') and event.is_final_response():
+                break
         
         try:
             async for event in runner.run_async(user_id=user_id, session_id=session.id, new_message=content):
@@ -227,6 +273,8 @@ async def generate_fallback_response(prompt: str) -> str:
     except Exception as e:
         logger.error(f"Fallback response generation failed: {str(e)}")
         return "I'm experiencing technical difficulties but I'm still here to help with general financial questions!"
+        logger.error(f"Error processing secure request: {str(e)}")
+        yield f"data: {json.dumps({'type': 'error', 'message': f'Security Error: {str(e)}'})}\n\n"
 
 @app.post("/chat/stream")
 async def chat_stream(request: ChatRequest):
@@ -252,17 +300,23 @@ async def chat_stream(request: ChatRequest):
 @app.post("/chat", response_model=ChatResponse)
 async def chat_complete(request: ChatRequest):
     """
-    Get complete response from the intelligent financial agent with enhanced error handling
+    Get complete response from the financial agent with security guardrails (non-streaming)
     """
     if not request.prompt.strip():
         raise HTTPException(status_code=400, detail="Prompt cannot be empty")
     
     try:
+        # 1. Apply pre-execution security guardrails
+        pre_result = await security_guardrail.apply_pre_hook(request.prompt, request.user_id)
+        
+        if pre_result.blocked:
+            raise HTTPException(status_code=403, detail=pre_result.output)
+        
         from google.adk.runners import Runner
         from google.adk.sessions import InMemorySessionService
         from google.genai import types
         
-        logger.info(f"Processing complete response for user {request.user_id}")
+        logger.info(f"Processing secure complete response for user {request.user_id}")
         
         # Create session and runner with error handling
         session_service = InMemorySessionService()
@@ -278,8 +332,8 @@ async def chat_complete(request: ChatRequest):
         
         runner = Runner(agent=root_agent, app_name=app_name, session_service=session_service)
         
-        # Create user message content
-        content = types.Content(role='user', parts=[types.Part(text=request.prompt)])
+        # Create user message content with sanitized prompt
+        content = types.Content(role='user', parts=[types.Part(text=pre_result.output)])
         
         # Run the agent and collect complete response
         full_response = ""
@@ -314,6 +368,9 @@ async def chat_complete(request: ChatRequest):
                 fallback = await generate_fallback_response(request.prompt)
                 full_response = fallback + "\n\nNote: Some features may be limited due to temporary technical issues."
         
+        # 2. Apply post-execution security guardrails
+        post_result = await security_guardrail.apply_post_hook(full_response, request.user_id)
+        
         return ChatResponse(
             response=full_response or "I apologize, but I couldn't generate a response. Please try again.",
             status="success" if full_response else "partial_success",
@@ -322,6 +379,8 @@ async def chat_complete(request: ChatRequest):
             login_url=os.getenv('MCP_LOGIN_URL') if authentication_required else None
         )
         
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Critical error processing request: {str(e)}")
         
@@ -359,24 +418,22 @@ async def root():
     Root endpoint with comprehensive API information
     """
     return {
-        "message": "NaviFi Intelligent Financial Agent API",
+        "message": "NaviFi Financial Agent API",
         "version": "2.0.0",
-        "description": "Dynamic financial planning with intelligent agent selection",
+        "description": "Secure financial data analysis with comprehensive guardrails",
+        "security_features": [
+            "Tool access control",
+            "Input validation",
+            "Rate limiting", 
+            "PII protection",
+            "Security logging"
+        ],
         "endpoints": {
             "streaming_chat": "/chat/stream",
-            "complete_chat": "/chat", 
-            "health": "/health"
-        },
-        "features": [
-            "🧠 Dynamic agent selection based on query analysis",
-            "🔐 Authentication-aware responses",
-            "🚨 Robust error handling and graceful degradation", 
-            "⚡ Optimized parallel/sequential agent execution",
-            "📊 Context state management for data efficiency"
-        ],
-        "authentication": {
-            "required_for": "Personalized financial data analysis",
-            "login_endpoint": os.getenv('MCP_LOGIN_URL', '/login')
+            "complete_chat": "/chat",
+            "health": "/health",
+            "security_status": "/security/status",
+            "security_tools": "/security/tools"
         }
     }
 

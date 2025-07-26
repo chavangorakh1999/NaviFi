@@ -7,10 +7,17 @@ Tests both streaming and non-streaming endpoints
 import requests
 import json
 import time
-import asyncio
-import aiohttp
 import sys
 from typing import Dict, Any
+
+# Check for optional packages
+try:
+    import asyncio
+    import aiohttp
+    ASYNC_AVAILABLE = True
+except ImportError:
+    ASYNC_AVAILABLE = False
+    print("⚠️  aiohttp not available - concurrent testing will be skipped")
 
 # API Configuration
 API_BASE_URL = "http://localhost:8000"
@@ -181,8 +188,13 @@ def test_error_handling():
     except Exception as e:
         print(f"   ❌ Error testing invalid JSON: {e}")
 
-async def test_concurrent_requests():
-    """Test multiple concurrent requests"""
+def test_concurrent_requests():
+    """Test multiple concurrent requests (if aiohttp is available)"""
+    if not ASYNC_AVAILABLE:
+        print("\n🔀 Skipping concurrent requests test (aiohttp not available)")
+        print("   To enable this test: pip install aiohttp")
+        return
+    
     print("\n🔀 Testing concurrent requests...")
     
     async def make_request(session, prompt, user_id):
@@ -198,20 +210,26 @@ async def test_concurrent_requests():
             return f"❌ User {user_id}: Error - {e}"
     
     try:
-        async with aiohttp.ClientSession() as session:
-            tasks = []
-            for i in range(3):
-                prompt = f"Test concurrent request {i+1}: What should I invest in?"
-                task = make_request(session, prompt, f"concurrent_user_{i+1}")
-                tasks.append(task)
-            
-            start_time = time.time()
-            results = await asyncio.gather(*tasks)
-            end_time = time.time()
-            
-            print(f"   ⏱️  Concurrent requests completed in {end_time - start_time:.2f}s")
-            for result in results:
-                print(f"   {result}")
+        import asyncio
+        import aiohttp
+        
+        async def run_concurrent_test():
+            async with aiohttp.ClientSession() as session:
+                tasks = []
+                for i in range(3):
+                    prompt = f"Test concurrent request {i+1}: What should I invest in?"
+                    task = make_request(session, prompt, f"concurrent_user_{i+1}")
+                    tasks.append(task)
+                
+                start_time = time.time()
+                results = await asyncio.gather(*tasks)
+                end_time = time.time()
+                
+                print(f"   ⏱️  Concurrent requests completed in {end_time - start_time:.2f}s")
+                for result in results:
+                    print(f"   {result}")
+        
+        asyncio.run(run_concurrent_test())
                 
     except Exception as e:
         print(f"   ❌ Concurrent test error: {e}")
@@ -224,7 +242,7 @@ def run_all_tests():
     # Basic connectivity tests
     if not test_health_check():
         print("\n❌ Server not accessible. Please start the API server first:")
-        print("   python api.py")
+        print("   python start_simple_api.py")
         return False
     
     test_root_endpoint()
@@ -235,14 +253,11 @@ def run_all_tests():
     test_error_handling()
     
     # Performance tests
-    try:
-        asyncio.run(test_concurrent_requests())
-    except Exception as e:
-        print(f"❌ Concurrent test failed: {e}")
+    test_concurrent_requests()
     
     print("\n🎉 Test suite completed!")
     print("\n📋 To start the API server:")
-    print("   python api.py")
+    print("   python start_simple_api.py")
     print("\n📋 To test specific endpoints manually:")
     print("   curl -X GET http://localhost:8000/health")
     print("   curl -X POST http://localhost:8000/chat -H 'Content-Type: application/json' -d '{\"prompt\":\"Help me plan my finances\"}'")
@@ -250,13 +265,4 @@ def run_all_tests():
     return True
 
 if __name__ == "__main__":
-    # Install required packages if not available
-    try:
-        import aiohttp
-    except ImportError:
-        print("Installing required test dependencies...")
-        import subprocess
-        subprocess.check_call([sys.executable, "-m", "pip", "install", "aiohttp"])
-        import aiohttp
-    
     run_all_tests() 
