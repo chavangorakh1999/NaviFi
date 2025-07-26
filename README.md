@@ -112,28 +112,187 @@ context.state = {
 
 ## 🚀 Key Features
 
-### 1. **Intelligent Data Caching**
+### 1. **REST API Interface**
+- **Streaming Responses**: Real-time response streaming for better UX
+- **Non-streaming Endpoint**: Complete responses for simple integrations
+- **FastAPI Framework**: High-performance async API with automatic documentation
+- **CORS Support**: Cross-origin requests enabled for web frontends
+- **Health Monitoring**: Built-in health check and monitoring endpoints
+
+### 2. **Intelligent Data Caching**
 - Single data fetch serves multiple analysis types
 - 24-hour data freshness management
 - Automatic stale data detection
 - Context-based data sharing across all agents
 
-### 2. **Specialized Analysis**
+### 3. **Specialized Analysis**
 - **Planning**: Retirement projections, investment strategies, goal planning
 - **Insights**: Spending patterns, behavioral analysis, budget optimization
 - **Coordination**: Smart routing based on query intent
 
-### 3. **Performance Optimization**
+### 4. **Performance Optimization**
 - No redundant MCP API calls
 - Efficient context-based data access
 - Parallel analysis capabilities
 - Cached data consistency
 
-### 4. **Session Management**
+### 5. **Session Management**
 - ADK-managed session persistence
 - Cross-conversation data continuity
 - User-specific financial profiles
 - State management across interactions
+
+## 🌐 REST API Endpoints
+
+### Available Endpoints
+
+| Endpoint | Method | Description | Response Type |
+|----------|--------|-------------|---------------|
+| `/` | GET | API information and available endpoints | JSON |
+| `/health` | GET | Health check for monitoring | JSON |
+| `/chat` | POST | Complete financial analysis response | JSON |
+| `/chat/stream` | POST | Streaming financial analysis response | Server-Sent Events |
+
+### API Usage Examples
+
+#### 1. **Health Check**
+```bash
+curl -X GET http://localhost:8000/health
+```
+
+Response:
+```json
+{
+  "status": "healthy",
+  "service": "NaviFi Financial Agent API"
+}
+```
+
+#### 2. **Complete Response** (Non-streaming)
+```bash
+curl -X POST http://localhost:8000/chat \
+  -H "Content-Type: application/json" \
+  -d '{
+    "prompt": "Help me plan for retirement",
+    "user_id": "user123"
+  }'
+```
+
+Response:
+```json
+{
+  "response": "Based on your current financial profile...",
+  "status": "success"
+}
+```
+
+#### 3. **Streaming Response**
+```bash
+curl -X POST http://localhost:8000/chat/stream \
+  -H "Content-Type: application/json" \
+  -d '{
+    "prompt": "Analyze my spending patterns",
+    "user_id": "user123"
+  }'
+```
+
+Response (Server-Sent Events):
+```
+data: {"type": "start", "message": "Processing your financial query..."}
+
+data: {"type": "chunk", "content": "Based on your bank transactions..."}
+
+data: {"type": "chunk", "content": "I notice your spending on dining..."}
+
+data: {"type": "end", "message": "Response complete"}
+```
+
+### Request Format
+
+All POST endpoints accept JSON with the following structure:
+
+```typescript
+{
+  "prompt": string,      // Required: User's financial query
+  "user_id": string      // Optional: User identifier (default: "default_user")
+}
+```
+
+### Integration Examples
+
+#### JavaScript/Frontend
+```javascript
+// Non-streaming request
+const response = await fetch('http://localhost:8000/chat', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    prompt: "What should I do with my salary hike?",
+    user_id: "user123"
+  })
+});
+const result = await response.json();
+
+// Streaming request
+const response = await fetch('http://localhost:8000/chat/stream', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    prompt: "Help me budget for buying a house",
+    user_id: "user123"
+  })
+});
+
+const reader = response.body.getReader();
+while (true) {
+  const { done, value } = await reader.read();
+  if (done) break;
+  
+  const chunk = new TextDecoder().decode(value);
+  const lines = chunk.split('\n');
+  
+  for (const line of lines) {
+    if (line.startsWith('data: ')) {
+      const data = JSON.parse(line.slice(6));
+      if (data.type === 'chunk') {
+        console.log(data.content);
+      }
+    }
+  }
+}
+```
+
+#### Python Client
+```python
+import requests
+import json
+
+# Non-streaming
+response = requests.post(
+    'http://localhost:8000/chat',
+    json={
+        'prompt': 'Help me optimize my investments',
+        'user_id': 'user123'
+    }
+)
+result = response.json()
+
+# Streaming
+response = requests.post(
+    'http://localhost:8000/chat/stream',
+    json={
+        'prompt': 'Plan my child\'s education funding',
+        'user_id': 'user123'
+    },
+    stream=True
+)
+
+for line in response.iter_lines():
+    if line.startswith(b'data: '):
+        data = json.loads(line[6:])
+        if data.get('type') == 'chunk':
+            print(data['content'], end='')
+```
 
 ## 📋 Usage Examples
 
@@ -187,31 +346,69 @@ Workflow:
 
 1. **Navigate to the project directory**
 ```bash
-cd finAgent
+cd NaviFi
 ```
 
 2. **Install dependencies**
 ```bash
-pip install google-adk
-pip install -r requirements.txt  # if exists
+pip install -r requirement.txt
 ```
 
 3. **Configure environment variables**
-```bash
-# Set up your MCP server URL
-export MCP_SERVER_URL="http://localhost:8000"
 
-# Configure Google credentials (if needed)
+You need to set up either Google AI Studio OR Vertex AI credentials:
+
+**Option A: Google AI Studio (Recommended for development)**
+```bash
+# Get your API key from https://aistudio.google.com/app/apikey
+export GOOGLE_API_KEY="your_api_key_here"
+export MCP_SERVER_URL="http://localhost:3000"
+```
+
+**Option B: Vertex AI (Recommended for production)**
+```bash
+# Set up Google Cloud credentials
+export GOOGLE_CLOUD_PROJECT="your-project-id"
+export GOOGLE_CLOUD_LOCATION="us-central1"  # or your preferred region
+export MCP_SERVER_URL="http://localhost:3000"
+
+# Optional: Service account credentials
 export GOOGLE_APPLICATION_CREDENTIALS="path/to/service-account.json"
 ```
 
-4. **Run the agent**
+4. **Run the system**
+
+**Option A: REST API Server (Recommended)**
 ```bash
-# Terminal interface (from finAgent directory)
-adk run master_agent
+# Start the FastAPI server
+python start_api.py
+
+# Server will be available at:
+# - Main API: http://localhost:8000
+# - Documentation: http://localhost:8000/docs
+# - Interactive Explorer: http://localhost:8000/redoc
+```
+
+**Option B: Direct Agent Interface**
+```bash
+# Terminal interface (from NaviFi directory)
+adk run root_agent
 
 # Web interface  
-adk web master_agent
+adk web root_agent
+```
+
+### Testing the API
+
+```bash
+# Run comprehensive test suite
+python test_api.py
+
+# Manual testing examples
+curl -X GET http://localhost:8000/health
+curl -X POST http://localhost:8000/chat \
+  -H "Content-Type: application/json" \
+  -d '{"prompt": "Help me plan my finances", "user_id": "test_user"}'
 ```
 
 ## 🔧 Configuration
