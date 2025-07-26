@@ -1,12 +1,13 @@
 # wealth_agent/agent.py
 from google.adk import Agent
 # from google.adk.tools import google_search
-from google.adk.tools.mcp_tool import MCPToolset,StreamableHTTPConnectionParams
+from google.adk.tools.mcp_tool.mcp_toolset import MCPToolset
+from google.adk.tools.mcp_tool.mcp_session_manager import StreamableHTTPServerParams
 # from google.adk import types
 import os
 
 mcp = MCPToolset(
-    connection_params=StreamableHTTPConnectionParams(
+    connection_params=StreamableHTTPServerParams(
         url=os.getenv("MCP_SERVER_URL"),
         
     ),
@@ -36,7 +37,7 @@ Consider inflation, expected returns, and risk factors in all projections.
 """
 
 planning_agent = Agent(
-    model="gemini-1.5-flash",
+    model="gemini-2.0-flash-001",
     name="PLANNING_AGENT",
     description="Agent specialized in long-term financial planning and goal projections",
     instruction=planning_agent_system_instruction,
@@ -68,7 +69,7 @@ Focus on actionable insights that can improve financial wellness.
 """
 
 insights_agent = Agent(
-    model="gemini-1.5-flash",
+    model="gemini-2.0-flash-001",
     name="INSIGHTS_AGENT",
     description="Agent specialized in personal financial insights and spending analysis",
     instruction=insights_agent_system_instruction,
@@ -77,7 +78,7 @@ insights_agent = Agent(
 
 root_agent = Agent(
     name="financial_agent",
-    model="gemini-1.5-flash",
+    model="gemini-2.0-flash-001",
     description="financial_agent: personal finance agent",
     instruction="Answer finance questions using MCP data. if you want to know stocks information you can use google search tool for those stocks.",
     tools=[mcp],
