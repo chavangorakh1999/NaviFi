@@ -1,10 +1,10 @@
-# Financial Agent System - ADK-Based Personal Finance Assistant
+# NaviFi - Comprehensive Personal Finance Assistant
 
 ## 🎯 Overview
 
-A sophisticated multi-agent financial assistant built with Google's Agent Development Kit (ADK) that provides comprehensive personal finance management, planning, and insights. The system uses MCP (Model Context Protocol) tools to fetch real financial data and leverages ADK's context management for efficient data sharing between specialized agents.
+NaviFi is a sophisticated multi-agent financial assistant built with Google's Agent Development Kit (ADK) that provides comprehensive personal finance management, planning, and insights. The system combines real personal financial data (via MCP tools) with real-time market research (via Google Search) to deliver personalized, actionable financial advice for various life events and investment scenarios.
 
-> **Note**: All agents are currently implemented in `master_agent/agent.py` with detailed instructions for context-based data access and sharing.
+> **Revolutionary Approach**: NaviFi uniquely combines personal financial data analysis with real-time market research to provide contextual, up-to-date financial guidance.
 
 ## 🏗️ Architecture
 
@@ -12,49 +12,60 @@ A sophisticated multi-agent financial assistant built with Google's Agent Develo
 
 ```
 financial_agent (Root Agent)
-├── DATA_AGENT (Data Management)
-├── PLANNING_AGENT (Financial Planning) 
-└── INSIGHTS_AGENT (Spending Analysis)
+└── complete_financial_workflow
+    ├── mcp_data_workflow (Sequential)
+    │   ├── DATA_AGENT (Data Management)
+    │   └── financial_analysis (Parallel)
+    │       ├── PLANNING_AGENT (Financial Planning)
+    │       └── INSIGHTS_AGENT (Spending Analysis)
+    └── market_research_workflow (Parallel)
+        ├── STOCK_SIP_AGENT 📈 (Investment Research)
+        ├── SALARY_HIKE_AGENT 🎉 (Salary Optimization)
+        ├── JOB_LOSS_AGENT 💔 (Crisis Management)
+        ├── CITY_MOVE_AGENT 🏠 (Relocation Planning)
+        ├── MARRIAGE_AGENT 💍 (Wedding & Joint Finance)
+        ├── FREELANCING_AGENT 💼 (Self-Employment)
+        ├── STOCK_WINDFALL_AGENT 📈 (Sudden Wealth)
+        └── CHILDBIRTH_AGENT 👶 (Family Planning)
 ```
 
 ### Data Flow
 
 ```
-User Query → Root Agent → Data Check → MCP Data Fetch → Context Storage → Specialized Analysis
+User Query → Root Agent → MCP Data Workflow → Market Research Workflow → Synthesized Response
 ```
 
 ### Project Structure
 
 ```
-finAgent/
-├── master_agent/
+NaviFi/
+├── root_agent/
 │   ├── __init__.py
-│   ├── agent.py          # All agents defined here
+│   ├── agent.py          # All agents and workflows defined here
 │   └── instructions.py   # Agent instructions
-├── example_workflow.py   # Usage examples
-└── README.md            # This file
+├── api.py               # FastAPI implementation
+├── start_api.py         # API server launcher
+├── test_api.py          # Comprehensive API tests
+├── requirement.txt      # Dependencies
+└── README.md           # This file
 ```
 
-## 🤖 Agent Responsibilities
+## 🤖 Agent Ecosystem
 
-### 1. **Root Agent** (`financial_agent`)
-- **Role**: Main coordinator and orchestrator
-- **Responsibilities**:
-  - Receives and routes user queries
-  - Manages data availability in context.state
-  - Delegates to specialized agents based on query type
-  - Handles stock market queries via MCP tools when needed
+### MCP-Based Agents (Personal Financial Data)
 
-### 2. **Data Agent** (`DATA_AGENT`) 
-- **Role**: Centralized data management
+#### 1. **Data Agent** (`DATA_AGENT`)
+- **Role**: Centralized financial data management
+- **Tools**: MCP Toolset with 6 financial data endpoints
 - **Responsibilities**:
   - Fetches ALL financial data from MCP server
   - Caches data in `context.state` for other agents
   - Manages data freshness and timestamps
-  - Provides structured data access for specialized agents
+  - Provides structured data access pattern
 
-### 3. **Planning Agent** (`PLANNING_AGENT`)
+#### 2. **Planning Agent** (`PLANNING_AGENT`)
 - **Role**: Long-term financial planning specialist
+- **Data Source**: Cached personal financial data
 - **Responsibilities**:
   - Retirement planning and EPF analysis
   - Investment strategy recommendations
@@ -62,8 +73,9 @@ finAgent/
   - Tax optimization strategies
   - Multi-scenario planning (conservative, moderate, aggressive)
 
-### 4. **Insights Agent** (`INSIGHTS_AGENT`)
+#### 3. **Insights Agent** (`INSIGHTS_AGENT`)
 - **Role**: Behavioral finance and spending analysis
+- **Data Source**: Cached personal financial data
 - **Responsibilities**:
   - Transaction pattern analysis
   - Spending behavior insights
@@ -71,7 +83,82 @@ finAgent/
   - Anomaly detection and fraud alerts
   - Financial wellness reports
 
-## 📊 Data Management
+### Google Search-Based Agents (Real-Time Market Research)
+
+#### 4. **Stock & SIP Agent** (`STOCK_SIP_AGENT`) 📈
+- **Role**: Investment advisory with real-time market data
+- **Tools**: Google Search
+- **Specialization**:
+  - Current best-performing stocks research
+  - Latest SIP options and mutual fund recommendations
+  - Market trends and economic indicators
+  - Goal-specific investment strategies
+  - Tax-efficient investment options
+
+#### 5. **Salary Hike Agent** (`SALARY_HIKE_AGENT`) 🎉
+- **Role**: Salary increase optimization strategies
+- **Tools**: Google Search
+- **Specialization**:
+  - Best SIP funds for increased income
+  - High-yield savings and emergency fund options
+  - Tax-saving investment schemes
+  - Salary hike financial planning best practices
+
+#### 6. **Job Loss Agent** (`JOB_LOSS_AGENT`) 💔
+- **Role**: Emergency financial crisis management
+- **Tools**: Google Search
+- **Specialization**:
+  - Unemployment benefits and assistance programs
+  - Emergency financial resources
+  - Job market trends and opportunities
+  - Expense reduction and survival strategies
+
+#### 7. **City Move Agent** (`CITY_MOVE_AGENT`) 🏠
+- **Role**: Relocation financial planning
+- **Tools**: Google Search
+- **Specialization**:
+  - Cost-of-living comparisons between cities
+  - Rental prices and affordable housing research
+  - Transportation and utility cost analysis
+  - Relocation budgeting and planning
+
+#### 8. **Marriage Agent** (`MARRIAGE_AGENT`) 💍
+- **Role**: Wedding and joint financial planning
+- **Tools**: Google Search
+- **Specialization**:
+  - Wedding cost analysis and budgeting
+  - Joint financial planning for couples
+  - Marriage-related financial products
+  - Prenuptial financial planning advice
+
+#### 9. **Freelancing Agent** (`FREELANCING_AGENT`) 💼
+- **Role**: Self-employment financial management
+- **Tools**: Google Search
+- **Specialization**:
+  - GST rules and tax regulations for freelancers
+  - Financial management tools and platforms
+  - Business insurance and tax deductions
+  - Retirement planning for self-employed
+
+#### 10. **Stock Windfall Agent** (`STOCK_WINDFALL_AGENT`) 📈
+- **Role**: Sudden wealth management
+- **Tools**: Google Search
+- **Specialization**:
+  - Investment allocation for sudden wealth
+  - Capital gains tax optimization
+  - Wealth preservation and diversification
+  - Large portfolio management strategies
+
+#### 11. **Childbirth Agent** (`CHILDBIRTH_AGENT`) 👶
+- **Role**: Family financial preparation
+- **Tools**: Google Search
+- **Specialization**:
+  - Education cost projections and inflation
+  - Child-specific investments and insurance
+  - Education funding strategies
+  - Family budget adjustments
+
+## 📊 Data Management & Context
 
 ### Context State Structure
 
@@ -110,31 +197,28 @@ context.state = {
 - `fetch_bank_transactions` - Complete bank transaction history
 - `fetch_stock_transactions` - Stock trading history
 
-## 🚀 Key Features
+## 🚀 Revolutionary Features
 
-### 1. **REST API Interface**
+### 1. **Dual-Engine Architecture**
+- **Personal Data Engine**: Uses MCP tools to fetch real financial data
+- **Market Research Engine**: Uses Google Search for real-time market information
+- **Synthesis**: Combines personal situation with current market opportunities
+
+### 2. **Life Event Specialization**
+- Dedicated agents for 8 major life events
+- Event-specific financial strategies and research
+- Real-time market data for each life event scenario
+
+### 3. **Intelligent Workflow Orchestration**
+- **Sequential Processing**: Data fetching followed by analysis
+- **Parallel Analysis**: Multiple agents analyze simultaneously
+- **Smart Coordination**: Root agent synthesizes all insights
+
+### 4. **REST API Interface**
 - **Streaming Responses**: Real-time response streaming for better UX
 - **Non-streaming Endpoint**: Complete responses for simple integrations
 - **FastAPI Framework**: High-performance async API with automatic documentation
 - **CORS Support**: Cross-origin requests enabled for web frontends
-- **Health Monitoring**: Built-in health check and monitoring endpoints
-
-### 2. **Intelligent Data Caching**
-- Single data fetch serves multiple analysis types
-- 24-hour data freshness management
-- Automatic stale data detection
-- Context-based data sharing across all agents
-
-### 3. **Specialized Analysis**
-- **Planning**: Retirement projections, investment strategies, goal planning
-- **Insights**: Spending patterns, behavioral analysis, budget optimization
-- **Coordination**: Smart routing based on query intent
-
-### 4. **Performance Optimization**
-- No redundant MCP API calls
-- Efficient context-based data access
-- Parallel analysis capabilities
-- Cached data consistency
 
 ### 5. **Session Management**
 - ADK-managed session persistence
@@ -173,17 +257,9 @@ Response:
 curl -X POST http://localhost:8000/chat \
   -H "Content-Type: application/json" \
   -d '{
-    "prompt": "Help me plan for retirement",
+    "prompt": "I just got a salary hike. What should I do?",
     "user_id": "user123"
   }'
-```
-
-Response:
-```json
-{
-  "response": "Based on your current financial profile...",
-  "status": "success"
-}
 ```
 
 #### 3. **Streaming Response**
@@ -191,25 +267,12 @@ Response:
 curl -X POST http://localhost:8000/chat/stream \
   -H "Content-Type: application/json" \
   -d '{
-    "prompt": "Analyze my spending patterns",
+    "prompt": "I just lost my job. What are my options?",
     "user_id": "user123"
   }'
 ```
 
-Response (Server-Sent Events):
-```
-data: {"type": "start", "message": "Processing your financial query..."}
-
-data: {"type": "chunk", "content": "Based on your bank transactions..."}
-
-data: {"type": "chunk", "content": "I notice your spending on dining..."}
-
-data: {"type": "end", "message": "Response complete"}
-```
-
 ### Request Format
-
-All POST endpoints accept JSON with the following structure:
 
 ```typescript
 {
@@ -218,119 +281,54 @@ All POST endpoints accept JSON with the following structure:
 }
 ```
 
-### Integration Examples
-
-#### JavaScript/Frontend
-```javascript
-// Non-streaming request
-const response = await fetch('http://localhost:8000/chat', {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({
-    prompt: "What should I do with my salary hike?",
-    user_id: "user123"
-  })
-});
-const result = await response.json();
-
-// Streaming request
-const response = await fetch('http://localhost:8000/chat/stream', {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({
-    prompt: "Help me budget for buying a house",
-    user_id: "user123"
-  })
-});
-
-const reader = response.body.getReader();
-while (true) {
-  const { done, value } = await reader.read();
-  if (done) break;
-  
-  const chunk = new TextDecoder().decode(value);
-  const lines = chunk.split('\n');
-  
-  for (const line of lines) {
-    if (line.startsWith('data: ')) {
-      const data = JSON.parse(line.slice(6));
-      if (data.type === 'chunk') {
-        console.log(data.content);
-      }
-    }
-  }
-}
-```
-
-#### Python Client
-```python
-import requests
-import json
-
-# Non-streaming
-response = requests.post(
-    'http://localhost:8000/chat',
-    json={
-        'prompt': 'Help me optimize my investments',
-        'user_id': 'user123'
-    }
-)
-result = response.json()
-
-# Streaming
-response = requests.post(
-    'http://localhost:8000/chat/stream',
-    json={
-        'prompt': 'Plan my child\'s education funding',
-        'user_id': 'user123'
-    },
-    stream=True
-)
-
-for line in response.iter_lines():
-    if line.startswith(b'data: '):
-        data = json.loads(line[6:])
-        if data.get('type') == 'chunk':
-            print(data['content'], end='')
-```
-
 ## 📋 Usage Examples
 
-### Retirement Planning Query
+### Life Event Scenarios
 
+#### Salary Hike 🎉
 ```
-User: "Help me plan for retirement. Am I on track?"
+User: "I just got a 30% salary hike. How should I optimize my finances?"
 
 Workflow:
-1. Root Agent checks context.state for EPF/investment data
-2. If missing → Data Agent fetches ALL financial data via MCP
-3. Data cached in context.state with timestamp
-4. Planning Agent accesses cached EPF, net worth, transaction data
-5. Provides retirement projections with multiple scenarios
+1. DATA_AGENT fetches current financial data
+2. PLANNING_AGENT analyzes current investment strategy  
+3. INSIGHTS_AGENT reviews spending patterns
+4. SALARY_HIKE_AGENT researches current SIP options and tax-saving investments
+5. Root Agent synthesizes personal data with market research
+6. Provides optimized strategy with specific fund recommendations
 ```
 
-### Spending Analysis Query
-
+#### Job Loss Crisis 💔
 ```
-User: "Analyze my spending patterns this month"
+User: "I just lost my job. What should I do financially?"
 
 Workflow:
-1. Root Agent checks context.state for transaction data  
-2. If available → Insights Agent accesses cached bank transactions
-3. Performs comprehensive spending analysis
-4. Provides behavioral insights and budget recommendations
+1. DATA_AGENT fetches emergency fund and expense data
+2. INSIGHTS_AGENT analyzes monthly spending patterns
+3. JOB_LOSS_AGENT researches unemployment benefits and assistance programs
+4. Root Agent creates emergency financial plan with current resources
 ```
 
-### Data Refresh Request
-
+#### Marriage Planning 💍
 ```
-User: "Get my latest financial data"
+User: "We're getting married next year. How should we plan financially?"
 
 Workflow:
-1. Root Agent delegates to Data Agent
-2. Data Agent calls all 6 MCP tools
-3. Updates context.state with fresh data
-4. Confirms successful caching with summary
+1. DATA_AGENT fetches current financial profile
+2. PLANNING_AGENT analyzes joint financial goals
+3. MARRIAGE_AGENT researches current wedding costs and joint financial products
+4. Provides wedding budget and joint financial strategy
+```
+
+#### Investment Research 📈
+```
+User: "What are the best stocks to invest in right now for retirement?"
+
+Workflow:
+1. DATA_AGENT fetches EPF and current investment data
+2. PLANNING_AGENT analyzes retirement timeline and goals
+3. STOCK_SIP_AGENT researches current market trends and best-performing stocks
+4. Provides retirement-focused investment recommendations with current market data
 ```
 
 ## 🛠️ Setup & Installation
@@ -356,29 +354,24 @@ pip install -r requirement.txt
 
 3. **Configure environment variables**
 
-You need to set up either Google AI Studio OR Vertex AI credentials:
-
-**Option A: Google AI Studio (Recommended for development)**
+**For Google AI Studio (Recommended for development):**
 ```bash
 # Get your API key from https://aistudio.google.com/app/apikey
 export GOOGLE_API_KEY="your_api_key_here"
 export MCP_SERVER_URL="http://localhost:3000"
 ```
 
-**Option B: Vertex AI (Recommended for production)**
+**For Vertex AI (Recommended for production):**
 ```bash
-# Set up Google Cloud credentials
 export GOOGLE_CLOUD_PROJECT="your-project-id"
-export GOOGLE_CLOUD_LOCATION="us-central1"  # or your preferred region
+export GOOGLE_CLOUD_LOCATION="us-central1"
 export MCP_SERVER_URL="http://localhost:3000"
-
-# Optional: Service account credentials
 export GOOGLE_APPLICATION_CREDENTIALS="path/to/service-account.json"
 ```
 
 4. **Run the system**
 
-**Option A: REST API Server (Recommended)**
+**REST API Server (Recommended):**
 ```bash
 # Start the FastAPI server
 python start_api.py
@@ -389,16 +382,16 @@ python start_api.py
 # - Interactive Explorer: http://localhost:8000/redoc
 ```
 
-**Option B: Direct Agent Interface**
+**Direct Agent Interface:**
 ```bash
-# Terminal interface (from NaviFi directory)
+# Terminal interface
 adk run root_agent
 
 # Web interface  
 adk web root_agent
 ```
 
-### Testing the API
+### Testing the System
 
 ```bash
 # Run comprehensive test suite
@@ -408,93 +401,15 @@ python test_api.py
 curl -X GET http://localhost:8000/health
 curl -X POST http://localhost:8000/chat \
   -H "Content-Type: application/json" \
-  -d '{"prompt": "Help me plan my finances", "user_id": "test_user"}'
+  -d '{"prompt": "Help me plan for my child'\''s education", "user_id": "test_user"}'
 ```
 
-## 🔧 Configuration
+## 🧩 Technical Architecture
 
-### Environment Variables
-
-- `MCP_SERVER_URL` - URL for the MCP server providing financial data
-- `GOOGLE_APPLICATION_CREDENTIALS` - Path to Google service account credentials (if required)
-
-### Agent Configuration
-
-All agents are defined in `finAgent/master_agent/agent.py`:
-
-- **Root Agent**: `financial_agent` with MCP tools and coordination logic
-- **DATA_AGENT**: Handles all MCP data fetching and context caching  
-- **PLANNING_AGENT**: Accesses cached data for financial planning analysis
-- **INSIGHTS_AGENT**: Accesses cached data for spending and behavioral analysis
-- **Model**: `gemini-1.5-flash` (configurable)
-- **Tools**: MCP toolset with financial data endpoints
-
-## 📈 Example Interactions
-
-### Financial Planning
-
-```
-User: "Create a 30-year retirement plan"
-→ Agent fetches current EPF, investments, expenses
-→ Calculates projected retirement corpus
-→ Provides investment recommendations
-→ Shows multiple scenarios with different saving rates
-```
-
-### Spending Insights
-
-```
-User: "Why is my spending high this month?"
-→ Agent analyzes recent transactions
-→ Identifies spending categories and trends
-→ Compares with historical patterns
-→ Suggests optimization opportunities
-```
-
-### Goal Planning
-
-```
-User: "Can I afford a house in 5 years?"
-→ Agent assesses current savings and income
-→ Calculates required down payment
-→ Projects savings growth over 5 years
-→ Recommends savings strategy for house purchase
-```
-
-## 🧩 Technical Benefits
-
-### 1. **ADK Framework Advantages**
-- Built-in session management
-- Automatic context persistence  
-- Multi-agent coordination
-- Streaming and async support
-
-### 2. **Context-Based Architecture**
-- Efficient data sharing between agents
-- No manual session passing required
-- Consistent data access patterns
-- Automatic state management
-
-### 3. **MCP Integration**
-- Real financial data access
-- Standardized tool interface
-- Secure data transmission
-- Extensible data sources
-
-### 4. **Modular Design**
-- Specialized agent responsibilities
-- Easy to extend with new agents
-- Clear separation of concerns
-- Maintainable codebase
-
-## 🏛️ Architectural Decisions
-
-### **Single-File Implementation**
-All agents are defined in `master_agent/agent.py` for:
-- **Simplicity**: Easy to understand and maintain
-- **Consistency**: All agent configurations in one place
-- **Performance**: Reduced import overhead
-- **Development**: Faster iteration and testing
+### **Multi-Workflow Design**
+- **MCP Workflow**: Sequential data fetching followed by parallel analysis
+- **Search Workflow**: Parallel market research across all life event agents
+- **Root Coordination**: Synthesizes results from both workflows
 
 ### **Context-First Data Strategy**
 Using `context.state` for data sharing provides:
@@ -503,12 +418,54 @@ Using `context.state` for data sharing provides:
 - **No Redundant Calls**: Single MCP fetch serves multiple analyses
 - **Data Consistency**: Guaranteed identical data across agents
 
-### **Specialized Agent Roles**
-Each agent has a focused responsibility:
-- **DATA_AGENT**: Pure data fetching and caching
-- **PLANNING_AGENT**: Financial planning and projections  
-- **INSIGHTS_AGENT**: Behavioral analysis and insights
-- **Root Agent**: Coordination and routing
+### **Tool Specialization**
+- **MCP Tools**: Personal financial data (6 endpoints)
+- **Google Search**: Real-time market research and life event information
+- **No Tool Overlap**: Clear separation of data sources and responsibilities
+
+## 🔧 Configuration
+
+### Environment Variables
+
+- `MCP_SERVER_URL` - URL for the MCP server providing financial data
+- `GOOGLE_API_KEY` - Google AI Studio API key (for development)
+- `GOOGLE_CLOUD_PROJECT` - Google Cloud project ID (for production)
+- `GOOGLE_APPLICATION_CREDENTIALS` - Service account credentials path
+
+### Agent Configuration
+
+All agents and workflows are defined in `root_agent/agent.py`:
+
+- **Model**: `gemini-2.0-flash` for all agents
+- **MCP Tools**: 6 financial data endpoints
+- **Google Search**: Real-time market research capability
+- **Workflows**: Sequential and parallel agent orchestration
+
+## 🏛️ Key Benefits
+
+### 1. **Comprehensive Coverage**
+- Personal financial data analysis
+- Real-time market research
+- Life event specialization
+- Crisis management capabilities
+
+### 2. **Real-Time Intelligence**
+- Current market trends and opportunities
+- Up-to-date investment recommendations
+- Latest government policies and benefits
+- Current cost-of-living data
+
+### 3. **Personalized Advice**
+- Uses actual financial data, not assumptions
+- Contextual recommendations based on personal situation
+- Goal-specific planning and projections
+- Risk assessment based on actual financial position
+
+### 4. **Scalable Architecture**
+- Easy to add new life event agents
+- Modular workflow design
+- Clean separation of concerns
+- Extensible tool integration
 
 ## 🔒 Security & Privacy
 
@@ -516,28 +473,29 @@ Each agent has a focused responsibility:
 - **Session Isolation**: User data isolated per session
 - **Access Control**: Configurable MCP endpoint permissions
 - **Data Retention**: Configurable session persistence policies
+- **API Security**: CORS and rate limiting support
 
 ## 🚀 Future Enhancements
 
-1. **Real-time Data Updates** - Live market data integration
-2. **Advanced ML Models** - Predictive spending analysis
-3. **Multi-language Support** - Regional financial planning
-4. **Mobile Integration** - React Native or Flutter app
-5. **Compliance Features** - Regulatory reporting capabilities
+1. **Enhanced Life Events** - Divorce, inheritance, medical emergencies
+2. **International Support** - Multi-currency and cross-border planning
+3. **Advanced Analytics** - Machine learning for predictive insights
+4. **Mobile Integration** - Native mobile app development
+5. **Compliance Features** - Regulatory reporting and tax filing
+6. **Social Features** - Family financial planning and sharing
 
 ## 📚 Documentation
 
-- [ADK Documentation](https://google.github.io/adk-docs/)
+- [ADK Documentation](https://cloud.google.com/vertex-ai/generative-ai/docs/agent-builder)
 - [MCP Protocol Specification](https://modelcontextprotocol.io/)
-- [Agent Architecture Guide](./docs/architecture.md)
-- [API Reference](./docs/api.md)
+- [Gemini API Documentation](https://ai.google.dev/)
 
 ## 🤝 Contributing
 
 1. Fork the repository
-2. Create a feature branch
+2. Create a feature branch (`git checkout -b feature/new-life-event-agent`)
 3. Make your changes
-4. Add tests if applicable
+4. Add tests for new agents or workflows
 5. Submit a pull request
 
 ## 📄 License
@@ -549,8 +507,10 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 For questions or support:
 - Create an issue in the repository
 - Check the ADK documentation
-- Review the example workflows in `example_workflow.py`
+- Review the comprehensive test suite in `test_api.py`
 
 ---
 
-**Built with ❤️ using Google's Agent Development Kit (ADK)** 
+**Built with ❤️ using Google's Agent Development Kit (ADK) and Gemini 2.0 Flash**
+
+*NaviFi - Your AI-powered financial navigator for every life event* 
