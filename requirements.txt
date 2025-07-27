@@ -1,0 +1,37 @@
+# Core Google ADK and MCP
+google-adk
+mcp
+
+# FastAPI and web server
+fastapi>=0.104.1
+uvicorn[standard]>=0.24.0
+pydantic>=2.5.0
+
+# HTTP clients and networking
+requests>=2.31.0
+aiohttp>=3.9.0
+
+# File processing and multimodal support
+aiofiles>=23.2.0
+python-multipart>=0.0.6
+
+# Data processing and encryption
+cryptography>=41.0.0
+hashlib-compat>=1.0.0
+
+# Audio processing (for voice features)
+# Note: For production, you may want to add specific STT/TTS libraries
+# pydub>=0.25.1  # For audio manipulation
+# speechrecognition>=3.10.0  # For offline STT
+
+# PDF processing (for document parsing)
+# PyMuPDF>=1.23.0  # For PDF text extraction
+# pdfplumber>=0.9.0  # Alternative PDF parser
+
+# Optional: For enhanced local processing
+# numpy>=1.24.0
+# pandas>=2.0.0  # For financial data analysis
+
+# Development and testing
+pytest>=7.4.0
+pytest-asyncio>=0.21.0 
